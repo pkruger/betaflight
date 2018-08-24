@@ -35,6 +35,7 @@
 #include "platform.h"
 
 #ifdef USE_OSD
+#include "interface/cli.h"
 
 #include "blackbox/blackbox.h"
 #include "blackbox/blackbox_io.h"
@@ -144,6 +145,7 @@ timeUs_t resumeRefreshAt = 0;
 
 static uint8_t armState;
 static bool lastArmState;
+static uint8_t OSD_Profile = 0;
 
 static displayPort_t *osdDisplayPort;
 
@@ -453,6 +455,11 @@ static bool osdDrawSingleElement(uint8_t item)
 {
     if (!VISIBLE(osdConfig()->item_pos[item]) || BLINK(item)) {
         return false;
+    }
+
+    if (feature(FEATURE_OSD_PROFILE)) {
+        // check if this element is on the currently selected page
+        if ((OSD_ELEMENT_PROFILE_MASK(osdConfig()->item_pos[item]) & OSD_Profile) == 0) return false;
     }
 
     uint8_t elemPosX = OSD_X(osdConfig()->item_pos[item]);
@@ -1113,6 +1120,7 @@ void osdInit(displayPort_t *osdDisplayPortToUse)
     char string_buffer[30];
     tfp_sprintf(string_buffer, "V%s", FC_VERSION_STRING);
     displayWrite(osdDisplayPort, 20, 6, string_buffer);
+
 #ifdef USE_CMS
     displayWrite(osdDisplayPort, 7, 8,  CMS_STARTUP_HELP_TEXT1);
     displayWrite(osdDisplayPort, 11, 9, CMS_STARTUP_HELP_TEXT2);
@@ -1600,4 +1608,56 @@ void osdUpdate(timeUs_t currentTimeUs)
 #endif
 }
 
+uint8_t getOSDprofile(void)
+{
+    // 0001 ->> 0
+    // 0010 ->> 1
+    // 0100 ->> 2
+    // 1000 ->> 3
+    uint8_t count = 0;
+    uint8_t temp = OSD_Profile;
+    while (temp != 0)
+    {
+        if (temp & 0x01)
+        {
+            break;
+        }
+        temp >>= 1;
+        count++;
+    }
+    return count;
+}
+
+void setOSDprofile(uint8_t value)
+{
+    // 0 ->> 0001
+    // 1 ->> 0010
+    // 2 ->> 0100
+    // 3 ->> 1000
+    OSD_Profile = 1 << value;
+ }
+
+void buildOSDProfileString(uint8_t value, char *buffer)
+{
+uint8_t count = 0;
+
+    if (NULL == buffer) return;
+    if (value == 0) {
+        strcpy(buffer, "none");
+        return;
+    }
+
+    while (count < 4) {
+        if (value & 0x01) {
+            *buffer++ = (count+1) + 0x30;
+            if ((value >> 1) != 0) {
+                *buffer++ = ',';
+            }
+        }
+        value >>= 1;
+        if (value == 0) break;
+        count++;
+    }
+    *buffer = 0x00;
+}
 #endif // USE_OSD

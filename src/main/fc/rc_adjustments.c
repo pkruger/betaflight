@@ -30,6 +30,7 @@
 #include "blackbox/blackbox_fielddefs.h"
 
 #include "build/build_config.h"
+#include "build/debug.h"
 
 #include "common/axis.h"
 #include "common/maths.h"
@@ -47,6 +48,7 @@
 #include "io/beeper.h"
 #include "io/motors.h"
 #include "io/pidaudio.h"
+#include "io/osd.h"
 
 #include "fc/config.h"
 #include "fc/controlrate_profile.h"
@@ -54,7 +56,11 @@
 #include "fc/rc_controls.h"
 #include "fc/fc_rc.h"
 
+
+#include "interface/cli.h"
 #include "rx/rx.h"
+#include "../io/beeper.h"
+#include "../build/debug.h"
 
 PG_REGISTER_ARRAY(adjustmentRange_t, MAX_ADJUSTMENT_RANGE_COUNT, adjustmentRanges, PG_ADJUSTMENT_RANGE_CONFIG, 0);
 
@@ -215,6 +221,22 @@ static const adjustmentConfig_t defaultAdjustmentConfigs[ADJUSTMENT_FUNCTION_COU
         .mode = ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 255 }
     }, {
+        .adjustmentFunction = ADJUSTMENT_ROLL_RC_RATE,
+        .mode = ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_PITCH_RC_RATE,
+        .mode = ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_ROLL_RC_EXPO,
+        .mode = ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_PITCH_RC_EXPO,
+        .mode = ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
         .adjustmentFunction = ADJUSTMENT_PID_AUDIO,
         .mode = ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = ARRAYLEN(pidAudioPositionToModeMap) }
@@ -230,6 +252,10 @@ static const adjustmentConfig_t defaultAdjustmentConfigs[ADJUSTMENT_FUNCTION_COU
         .adjustmentFunction = ADJUSTMENT_YAW_F,
         .mode = ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_OSD_PROFILE,
+        .mode = ADJUSTMENT_MODE_SELECT,
+        .data = { .switchPositions = 4 }
     }
 };
 
@@ -266,7 +292,8 @@ static const char * const adjustmentLabels[] = {
     "PID AUDIO",
     "PITCH F",
     "ROLL F",
-    "YAW F"
+    "YAW F",
+    "OSD PAGE"
 };
 
 static int adjustmentRangeNameIndex = 0;
@@ -652,6 +679,13 @@ static uint8_t applySelectAdjustment(adjustmentFunction_e adjustmentFunction, ui
         }
 #endif
         break;
+    case ADJUSTMENT_OSD_PROFILE:
+        if (getOSDprofile() != position) {
+            setOSDprofile(position);
+            beeps = position + 1;
+        }
+
+        break;
 
     default:
         break;
@@ -730,7 +764,9 @@ void processRcAdjustments(controlRateConfig_t *controlRateConfig)
         }
 
 #if defined(USE_OSD) && defined(USE_OSD_ADJUSTMENTS)
-        if (newValue != -1 && adjustmentState->config->adjustmentFunction != ADJUSTMENT_RATE_PROFILE) { // Rate profile already has an OSD element
+        if (newValue != -1 &&
+            adjustmentState->config->adjustmentFunction != ADJUSTMENT_RATE_PROFILE &&   // Rate profile already has an OSD element
+            adjustmentState->config->adjustmentFunction != ADJUSTMENT_OSD_PROFILE) {
             adjustmentRangeNameIndex = adjustmentFunction;
             adjustmentRangeValue = newValue;
         }
