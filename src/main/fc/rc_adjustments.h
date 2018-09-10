@@ -58,7 +58,9 @@ typedef enum {
     ADJUSTMENT_PITCH_F,
     ADJUSTMENT_ROLL_F,
     ADJUSTMENT_YAW_F,
+#ifdef USE_OSD_PROFILES
     ADJUSTMENT_OSD_PROFILE,
+#endif
     ADJUSTMENT_FUNCTION_COUNT
 } adjustmentFunction_e;
 

@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
+#include <io/osd.h>
 
 #include "platform.h"
 
@@ -79,15 +80,29 @@ PG_RESET_TEMPLATE(pilotConfig_t, pilotConfig,
 
 PG_REGISTER_WITH_RESET_TEMPLATE(systemConfig_t, systemConfig, PG_SYSTEM_CONFIG, 2);
 
+#ifdef USE_OSD_PROFILES
 PG_RESET_TEMPLATE(systemConfig_t, systemConfig,
     .pidProfileIndex = 0,
     .activeRateProfile = 0,
+    .osdProfileIndex = 0,
     .debug_mode = DEBUG_MODE,
     .task_statistics = true,
     .cpu_overclock = 0,
     .powerOnArmingGraceTime = 5,
     .boardIdentifier = TARGET_BOARD_IDENTIFIER
 );
+#else
+PG_RESET_TEMPLATE(systemConfig_t, systemConfig,
+                  .pidProfileIndex = 0,
+                  .activeRateProfile = 0,
+                  .debug_mode = DEBUG_MODE,
+                  .task_statistics = true,
+                  .cpu_overclock = 0,
+                  .powerOnArmingGraceTime = 5,
+                  .boardIdentifier = TARGET_BOARD_IDENTIFIER
+);
+
+#endif
 
 #ifndef USE_OSD_SLAVE
 uint8_t getCurrentPidProfileIndex(void)
@@ -133,6 +148,10 @@ static void activateConfig(void)
     pidInit(currentPidProfile);
     useRcControlsConfig(currentPidProfile);
     useAdjustmentConfig(currentPidProfile);
+
+#ifdef USE_OSD_PROFILES
+    changeOsdProfileIndex(systemConfig()->osdProfileIndex);
+#endif
 
     failsafeReset();
     setAccelerationTrims(&accelerometerConfigMutable()->accZero);
@@ -583,3 +602,19 @@ void changePidProfile(uint8_t pidProfileIndex)
     beeperConfirmationBeeps(pidProfileIndex + 1);
 }
 #endif
+
+#ifdef USE_OSD_PROFILES
+uint8_t getCurrentOsdProfileIndex(void)
+{
+    return systemConfig()->osdProfileIndex;
+}
+
+void changeOsdProfileIndex(uint8_t profileIndex)
+{
+    if (profileIndex <= OSD_PROFILE_COUNT) {
+        systemConfigMutable()->osdProfileIndex = profileIndex;
+        setOsdProfile(profileIndex);
+    }
+}
+#endif
+

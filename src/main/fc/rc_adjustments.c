@@ -220,7 +220,9 @@ static const adjustmentConfig_t defaultAdjustmentConfigs[ADJUSTMENT_FUNCTION_COU
         .adjustmentFunction = ADJUSTMENT_HORIZON_STRENGTH,
         .mode = ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 255 }
-    }, {
+    },
+#ifdef USE_OSD_PROFILES
+    {
         .adjustmentFunction = ADJUSTMENT_ROLL_RC_RATE,
         .mode = ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
@@ -236,7 +238,9 @@ static const adjustmentConfig_t defaultAdjustmentConfigs[ADJUSTMENT_FUNCTION_COU
         .adjustmentFunction = ADJUSTMENT_PITCH_RC_EXPO,
         .mode = ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
-    }, {
+    },
+#endif
+    {
         .adjustmentFunction = ADJUSTMENT_PID_AUDIO,
         .mode = ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = ARRAYLEN(pidAudioPositionToModeMap) }
@@ -252,11 +256,14 @@ static const adjustmentConfig_t defaultAdjustmentConfigs[ADJUSTMENT_FUNCTION_COU
         .adjustmentFunction = ADJUSTMENT_YAW_F,
         .mode = ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
-    }, {
+    }
+#ifdef USE_OSD_PROFILES
+    , {
         .adjustmentFunction = ADJUSTMENT_OSD_PROFILE,
         .mode = ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 4 }
     }
+#endif
 };
 
 #if defined(USE_OSD) && defined(USE_OSD_ADJUSTMENTS)
@@ -293,7 +300,7 @@ static const char * const adjustmentLabels[] = {
     "PITCH F",
     "ROLL F",
     "YAW F",
-    "OSD PAGE"
+    "OSD PROFILE"
 };
 
 static int adjustmentRangeNameIndex = 0;
@@ -679,12 +686,12 @@ static uint8_t applySelectAdjustment(adjustmentFunction_e adjustmentFunction, ui
         }
 #endif
         break;
+#ifdef USE_OSD_PROFILES
     case ADJUSTMENT_OSD_PROFILE:
-        if (getOSDprofile() != position) {
-            setOSDprofile(position);
-            beeps = position + 1;
+        if (getCurrentOsdProfileIndex() != (position+1)) {
+            changeOsdProfileIndex(position+1);
         }
-
+#endif
         break;
 
     default:
@@ -764,12 +771,21 @@ void processRcAdjustments(controlRateConfig_t *controlRateConfig)
         }
 
 #if defined(USE_OSD) && defined(USE_OSD_ADJUSTMENTS)
+#ifdef USE_OSD_PROFILES
         if (newValue != -1 &&
             adjustmentState->config->adjustmentFunction != ADJUSTMENT_RATE_PROFILE &&   // Rate profile already has an OSD element
             adjustmentState->config->adjustmentFunction != ADJUSTMENT_OSD_PROFILE) {
             adjustmentRangeNameIndex = adjustmentFunction;
             adjustmentRangeValue = newValue;
         }
+#else
+        if (newValue != -1 &&
+            adjustmentState->config->adjustmentFunction != ADJUSTMENT_RATE_PROFILE) { // Rate profile already has an OSD element
+            adjustmentRangeNameIndex = adjustmentFunction;
+            adjustmentRangeValue = newValue;
+        }
+
+#endif
 #else
         UNUSED(newValue);
 #endif

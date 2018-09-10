@@ -145,7 +145,7 @@ timeUs_t resumeRefreshAt = 0;
 
 static uint8_t armState;
 static bool lastArmState;
-static uint8_t OSD_Profile = 0;
+static uint8_t osdProfile = 0;
 
 static displayPort_t *osdDisplayPort;
 
@@ -457,10 +457,7 @@ static bool osdDrawSingleElement(uint8_t item)
         return false;
     }
 
-    if (feature(FEATURE_OSD_PROFILE)) {
-        // check if this element is on the currently selected page
-        if ((OSD_ELEMENT_PROFILE_MASK(osdConfig()->item_pos[item]) & OSD_Profile) == 0) return false;
-    }
+    if ((osdProfile != 0) && ((OSD_ELEMENT_PROFILE_MASK(osdConfig()->item_pos[item]) & osdProfile) == 0)) return false;
 
     uint8_t elemPosX = OSD_X(osdConfig()->item_pos[item]);
     uint8_t elemPosY = OSD_Y(osdConfig()->item_pos[item]);
@@ -1120,7 +1117,6 @@ void osdInit(displayPort_t *osdDisplayPortToUse)
     char string_buffer[30];
     tfp_sprintf(string_buffer, "V%s", FC_VERSION_STRING);
     displayWrite(osdDisplayPort, 20, 6, string_buffer);
-
 #ifdef USE_CMS
     displayWrite(osdDisplayPort, 7, 8,  CMS_STARTUP_HELP_TEXT1);
     displayWrite(osdDisplayPort, 11, 9, CMS_STARTUP_HELP_TEXT2);
@@ -1608,36 +1604,21 @@ void osdUpdate(timeUs_t currentTimeUs)
 #endif
 }
 
-uint8_t getOSDprofile(void)
+#ifdef USE_OSD_PROFILES
+void setOsdProfile(uint8_t value)
 {
-    // 0001 ->> 0
-    // 0010 ->> 1
-    // 0100 ->> 2
-    // 1000 ->> 3
-    uint8_t count = 0;
-    uint8_t temp = OSD_Profile;
-    while (temp != 0)
-    {
-        if (temp & 0x01)
-        {
-            break;
-        }
-        temp >>= 1;
-        count++;
+    // 0 -<< 0000
+    // 1 ->> 0001
+    // 2 ->> 0010
+    // 3 ->> 0100
+    // 4 ->> 1000
+    if (value <= OSD_PROFILE_COUNT) {
+        if (value == 0) osdProfile = value;
+        else osdProfile = 1 << (value - 1);
     }
-    return count;
-}
-
-void setOSDprofile(uint8_t value)
-{
-    // 0 ->> 0001
-    // 1 ->> 0010
-    // 2 ->> 0100
-    // 3 ->> 1000
-    OSD_Profile = 1 << value;
  }
 
-void buildOSDProfileString(uint8_t value, char *buffer)
+void buildOsdProfileString(uint8_t value, char *buffer)
 {
 uint8_t count = 0;
 
@@ -1660,4 +1641,5 @@ uint8_t count = 0;
     }
     *buffer = 0x00;
 }
+#endif
 #endif // USE_OSD

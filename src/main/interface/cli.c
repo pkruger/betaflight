@@ -178,6 +178,9 @@ static bool configIsInCopy = false;
 #define CURRENT_PROFILE_INDEX -1
 static int8_t pidProfileIndexToUse = CURRENT_PROFILE_INDEX;
 static int8_t rateProfileIndexToUse = CURRENT_PROFILE_INDEX;
+#ifdef USE_OSD_PROFILES
+static int8_t osdProfileIndexToUse = CURRENT_PROFILE_INDEX;
+#endif
 
 #if defined(USE_BOARD_INFO)
 static bool boardInformationUpdated = false;
@@ -186,8 +189,10 @@ static bool signatureUpdated = false;
 #endif
 #endif // USE_BOARD_INFO
 
+#ifdef USE_OSD_PROFILES
 static uint32_t osdElementStartIndex = 0;
 static uint32_t osdElementEndIndex = 0;
+#endif
 
 static const char* const emptyName = "-";
 static const char* const emptyString = "";
@@ -212,7 +217,7 @@ static const char * const featureNames[] = {
     "RX_MSP", "RSSI_ADC", "LED_STRIP", "DISPLAY", "OSD",
     "", "CHANNEL_FORWARDING", "TRANSPONDER", "AIRMODE",
     "", "", "RX_SPI", "SOFTSPI", "ESC_SENSOR", "ANTI_GRAVITY", "DYNAMIC_FILTER",
-    "OSD_PROFILE", NULL
+    NULL
 };
 
 // sync this with rxFailsafeChannelMode_e
@@ -314,14 +319,18 @@ typedef enum {
     DO_DIFF = (1 << 4),
     SHOW_DEFAULTS = (1 << 5),
     HIDE_UNUSED = (1 << 6),
-    DUMP_OSD_PROFILE = (1 << 7)
+#ifdef USE_OSD_PROFILES
+    DUMP_OSD_PROFILE = (1 << 7),
+#endif
 } dumpFlags_e;
 
+#ifdef USE_OSD_PROFILES
 typedef enum {
     STANDARD_VALUE,
     EXTENDED_VALUE,
     OSD_POS_VALUE
 } dumpValue_e;
+#endif
 
 static void cliPrintfva(const char *format, va_list va)
 {
@@ -392,8 +401,11 @@ static void cliPrintErrorLinef(const char *format, ...)
     cliPrintLinefeed();
 }
 
-
+#ifdef USE_OSD_PROFILES
 static void printValuePointer(const clivalue_t *var, const void *valuePointer, bool full, dumpValue_e type)
+#else
+static void printValuePointer(const clivalue_t *var, const void *valuePointer, bool full)
+#endif
 {
     if ((var->type & VALUE_MODE_MASK) == MODE_ARRAY) {
         for (int i = 0; i < var->config.array.length; i++) {
@@ -447,19 +459,23 @@ static void printValuePointer(const clivalue_t *var, const void *valuePointer, b
 
         switch (var->type & VALUE_MODE_MASK) {
         case MODE_DIRECT:
+#ifdef USE_OSD_PROFILES
             if (type == STANDARD_VALUE) {
+#endif
                 cliPrintf("%d", value);
                 if (full) {
                     cliPrintf(" %d %d", var->config.minmax.min, var->config.minmax.max);
                 }
+#ifdef USE_OSD_PROFILES
             } else if (type == OSD_POS_VALUE) {
                 cliPrintf("%d", (value & OSD_POS_MAX));
             } else if (type == EXTENDED_VALUE) {
                 char buffer[8];
                 value = OSD_ELEMENT_PROFILE_MASK(value);
-                buildOSDProfileString(value, buffer);
+                buildOsdProfileString(value, buffer);
                 cliPrintf("%s", buffer);
             }
+#endif
             break;
         case MODE_LOOKUP:
             cliPrint(lookupTables[var->config.lookup.tableIndex].values[value]);
@@ -552,7 +568,11 @@ const void *cliGetDefaultPointer(const clivalue_t *value)
     return rec->address + getValueOffset(value);
 }
 
+#ifdef USE_OSD_PROFILES
 static void dumpPgValue(const clivalue_t *value, uint8_t dumpMask, dumpValue_e type)
+#else
+static void dumpPgValue(const clivalue_t *value, uint8_t dumpMask)
+#endif
 {
     const pgRegistry_t *pg = pgFind(value->pgn);
 #ifdef DEBUG
@@ -563,13 +583,15 @@ static void dumpPgValue(const clivalue_t *value, uint8_t dumpMask, dumpValue_e t
 #endif
 
     const char *format = "set %s = ";
+#ifdef USE_OSD_PROFILES
     const char *extendedformat = "osdprofile %s = ";
+#endif
     const char *defaultFormat = "#set %s = ";
-//    const char *defaultExtendedFormat = "#osdprofile %s = ";
     const int valueOffset = getValueOffset(value);
     const bool equalsDefault = valuePtrEqualsDefault(value, pg->copy + valueOffset, pg->address + valueOffset);
 
     if (((dumpMask & DO_DIFF) == 0) || !equalsDefault) {
+#ifdef USE_OSD_PROFILES
         if (dumpMask & SHOW_DEFAULTS && !equalsDefault) {
             cliPrintf(defaultFormat, value->name);
             printValuePointer(value, (uint8_t*)pg->address + valueOffset, false, STANDARD_VALUE);
@@ -587,6 +609,16 @@ static void dumpPgValue(const clivalue_t *value, uint8_t dumpMask, dumpValue_e t
             printValuePointer(value, pg->copy + valueOffset, false, STANDARD_VALUE);
             cliPrintLinefeed();
         }
+#else
+        if (dumpMask & SHOW_DEFAULTS && !equalsDefault) {
+            cliPrintf(defaultFormat, value->name);
+            printValuePointer(value, (uint8_t *) pg->address + valueOffset, false);
+            cliPrintLinefeed();
+        }
+        cliPrintf(format, value->name);
+        printValuePointer(value, pg->copy + valueOffset, false);
+        cliPrintLinefeed();
+#endif
     }
 }
 
@@ -596,11 +628,15 @@ static void dumpAllValues(uint16_t valueSection, uint8_t dumpMask)
         const clivalue_t *value = &valueTable[i];
         bufWriterFlush(cliWriter);
         if ((value->type & VALUE_SECTION_MASK) == valueSection) {
+#ifdef USE_OSD_PROFILES
             if ((i >= osdElementStartIndex) && (i <= osdElementEndIndex)) {
                 dumpPgValue(value, dumpMask, EXTENDED_VALUE);
             } else {
                 dumpPgValue(value, dumpMask, STANDARD_VALUE);
             }
+#else
+            dumpPgValue(value, dumpMask);
+#endif
         }
     }
 }
@@ -608,8 +644,11 @@ static void dumpAllValues(uint16_t valueSection, uint8_t dumpMask)
 static void cliPrintVar(const clivalue_t *var, bool full)
 {
     const void *ptr = cliGetValuePointer(var);
-
+#ifdef USE_OSD_PROFILES
     printValuePointer(var, ptr, full, STANDARD_VALUE);
+#else
+    printValuePointer(var, ptr, full);
+#endif
 }
 
 static void cliPrintVarRange(const clivalue_t *var)
@@ -703,8 +742,8 @@ static void cliSetVar(const clivalue_t *var, const int16_t value)
     }
 }
 
-
-static void cliOSDProfileSetVar(const clivalue_t *var, uint8_t value)
+#ifdef USE_OSD_PROFILES
+static void cliOsdProfileSetVar(const clivalue_t *var, uint8_t value)
 {
     void *ptr = cliGetValuePointer(var);
     uint16_t temp;
@@ -729,7 +768,7 @@ static void cliOSDProfileSetVar(const clivalue_t *var, uint8_t value)
         break;
     }
 }
-
+#endif
 
 #if defined(USE_RESOURCE_MGMT) && !defined(MINIMAL_CLI)
 static void cliRepeat(char ch, uint8_t len)
@@ -3284,7 +3323,8 @@ static void cliDumpRateProfile(uint8_t rateProfileIndex, uint8_t dumpMask)
     rateProfileIndexToUse = CURRENT_PROFILE_INDEX;
 }
 
-static void cliDumpOSDProfile()
+#ifdef USE_OSD_PROFILES
+static void cliDumpOsdProfile()
 {
 
     cliPrintHashLine("osdprofile");
@@ -3294,11 +3334,12 @@ static void cliDumpOSDProfile()
         const clivalue_t *val = &valueTable[i];
         uint16_t *data = (uint16_t *)cliGetValuePointer(val);
         uint8_t osdprofileval = OSD_ELEMENT_PROFILE_MASK(*data);
-        buildOSDProfileString(osdprofileval, buffer);
+        buildOsdProfileString(osdprofileval, buffer);
         cliPrintf("osdprofile %s = %s", val->name, buffer);
         cliPrintLinefeed();
     }
 }
+#endif
 
 static void cliSave(char *cmdline)
 {
@@ -3352,7 +3393,11 @@ void cliPrintVarDefault(const clivalue_t *value)
         const bool equalsDefault = valuePtrEqualsDefault(value, pg->copy + valueOffset, pg->address + valueOffset);
         if (!equalsDefault) {
             cliPrintf(defaultFormat, value->name);
+#ifdef USE_OSD_PROFILES
             printValuePointer(value, (uint8_t*)pg->address + valueOffset, false, STANDARD_VALUE);
+#else
+            printValuePointer(value, (uint8_t*)pg->address + valueOffset, false);
+#endif
             cliPrintLinefeed();
         }
     }
@@ -3365,6 +3410,9 @@ STATIC_UNIT_TESTED void cliGet(char *cmdline)
 
     pidProfileIndexToUse = getCurrentPidProfileIndex();
     rateProfileIndexToUse = getCurrentControlRateProfileIndex();
+#ifdef USE_OSD_PROFILES
+    osdProfileIndexToUse = getCurrentOsdProfileIndex();
+#endif
 
     backupAndResetConfigs();
 
@@ -3567,25 +3615,15 @@ STATIC_UNIT_TESTED void cliSet(char *cmdline)
     }
 }
 
-STATIC_UNIT_TESTED void cliOSDProfile(char *cmdline)
+#ifdef USE_OSD_PROFILES
+STATIC_UNIT_TESTED void cliOsdProfile(char *cmdline)
 {
-    const uint32_t len = strlen(cmdline);
     char *eqptr;
     char profilestring[8];
 
-    if (len == 0 || (len == 1 && cmdline[0] == '*')) {
-        cliPrintLine("Current settings: ");
-        for (uint32_t i = 0; i < valueTableEntryCount; i++) {
-            const clivalue_t *val = &valueTable[i];
-            if ((strstr(valueTable[i].name, "osd") != NULL) && (strstr(valueTable[i].name, "_pos") != NULL)) {
-                cliPrintf("%s profile = ", valueTable[i].name);
-                uint16_t *data = (uint16_t *)cliGetValuePointer(val);
-                uint8_t osdprofileval = OSD_ELEMENT_PROFILE_MASK(*data);
-                buildOSDProfileString(osdprofileval, profilestring);
-                cliPrint(profilestring);
-                cliPrintLinefeed();
-            }
-        }
+    if (isEmpty(cmdline)) {
+        cliPrintLinef("osdprofile %d", getCurrentOsdProfileIndex());
+        return;
     } else if ((eqptr = strstr(cmdline, "=")) != NULL) {
         // has equals
         uint8_t variableNameLength = getWordLength(cmdline, eqptr);
@@ -3625,11 +3663,11 @@ STATIC_UNIT_TESTED void cliOSDProfile(char *cmdline)
                     }
                 }
                 if (valueChanged) {
-                    cliOSDProfileSetVar(val, profile_val);
+                    cliOsdProfileSetVar(val, profile_val);
                     cliPrintf("%s profile set to = ", val->name);
                     uint16_t *data = (uint16_t *)cliGetValuePointer(val);
                     uint8_t osdprofileval = OSD_ELEMENT_PROFILE_MASK(*data);
-                    buildOSDProfileString(osdprofileval, profilestring);
+                    buildOsdProfileString(osdprofileval, profilestring);
                     cliPrint(profilestring);
                     cliPrintLinefeed();
                 } else {
@@ -3641,18 +3679,14 @@ STATIC_UNIT_TESTED void cliOSDProfile(char *cmdline)
         }
         cliPrintErrorLinef("Invalid name");
     } else {
-        // no equals, check for matching variables.
-        cliGet(cmdline);
+        const int i = atoi(cmdline);
+        if (i >= 0 && i <= OSD_PROFILE_COUNT) {
+            changeOsdProfileIndex(i);
+            cliOsdProfile("");
+        }
     }
 }
-
-static void cliOSDDbg(char *cmdline)
-{
-    uint8_t OSDProfileValue;
-    OSDProfileValue = getOSDprofile();
-    isEmpty(cmdline);
-    cliPrintLinef("OSDProfile=%u", OSDProfileValue);
-}
+#endif
 
 static void cliStatus(char *cmdline)
 {
@@ -4329,9 +4363,13 @@ static void printConfig(char *cmdline, bool doDiff)
         dumpMask = DUMP_RATES; // only
     } else if ((options = checkCommand(cmdline, "all"))) {
         dumpMask = DUMP_ALL;   // all profiles and rates
-    } else if ((options = checkCommand(cmdline, "osdprofile"))) {
+    }
+#ifdef USE_OSD_PROFILES
+    else if ((options = checkCommand(cmdline, "osdprofile"))) {
         dumpMask = DUMP_OSD_PROFILE;   // osd profile
-    } else {
+    }
+#endif
+    else {
         options = cmdline;
     }
 
@@ -4479,17 +4517,21 @@ static void printConfig(char *cmdline, bool doDiff)
         }
     }
 
+#ifdef USE_OSD_PROFILES
     if (dumpMask & DUMP_PROFILE) {
         cliDumpPidProfile(systemConfig_Copy.pidProfileIndex, dumpMask);
     }
+#endif
 
     if (dumpMask & DUMP_RATES) {
         cliDumpRateProfile(systemConfig_Copy.activeRateProfile, dumpMask);
     }
 
+#ifdef USE_OSD_PROFILES
     if (dumpMask & DUMP_OSD_PROFILE) {
-        cliDumpOSDProfile();
+        cliDumpOsdProfile();
     }
+#endif
     // restore configs from copies
     restoreConfigs();
 }
@@ -4577,8 +4619,13 @@ const clicmd_t cmdTable[] = {
 #ifdef USE_DSHOT
     CLI_COMMAND_DEF("dshotprog", "program DShot ESC(s)", "<index> <command>+", cliDshotProg),
 #endif
-    CLI_COMMAND_DEF("dump", "dump configuration",
+#ifdef USE_OSD_PROFILES
+        CLI_COMMAND_DEF("dump", "dump configuration",
         "[master|profile|rates|osdprofile|all] {defaults}", cliDump),
+#else
+    CLI_COMMAND_DEF("dump", "dump configuration",
+        "[master|profile|rates|all] {defaults}", cliDump),
+#endif
 #ifdef USE_ESCSERIAL
     CLI_COMMAND_DEF("escprog", "passthrough esc to serial", "<mode [sk/bl/ki/cc]> <index>", cliEscPassthrough),
 #endif
@@ -4650,8 +4697,9 @@ const clicmd_t cmdTable[] = {
     CLI_COMMAND_DEF("servo", "configure servos", NULL, cliServo),
 #endif
     CLI_COMMAND_DEF("set", "change setting", "[<name>=<value>]", cliSet),
-    CLI_COMMAND_DEF("osdprofile", "set display pages for OSD element", "[<name>=<value>]", cliOSDProfile),
-    CLI_COMMAND_DEF("osddbg", "show osd profile value", NULL, cliOSDDbg),
+#ifdef USE_OSD_PROFILES
+    CLI_COMMAND_DEF("osdprofile", "set display pages for OSD element", "[<name>=<value>]", cliOsdProfile),
+#endif
 #if defined(USE_BOARD_INFO) && defined(USE_SIGNATURE)
     CLI_COMMAND_DEF("signature", "get / set the board type signature", "[signature]", cliSignature),
 #endif
@@ -4824,6 +4872,7 @@ void cliEnter(serialPort_t *serialPort)
 void cliInit(const serialConfig_t *serialConfig)
 {
     UNUSED(serialConfig);
+#ifdef USE_OSD_PROFILES
     for (uint32_t i = 0; i < valueTableEntryCount; i++) {
         if (strcmp(valueTable[i].name, "osd_vbat_pos") == 0) {
             osdElementStartIndex = i;
@@ -4836,11 +4885,6 @@ void cliInit(const serialConfig_t *serialConfig)
             osdElementEndIndex = i;
         }
     }
-}
-
-void print_debug(char *message)
-{
-    cliPrint(message);
-    cliPrintLinefeed();
+#endif
 }
 #endif // USE_CLI
