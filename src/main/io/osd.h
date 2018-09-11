@@ -180,6 +180,8 @@ STATIC_ASSERT(OSD_WARNING_COUNT <= 16, osdwarnings_overflow);
 typedef struct osdConfig_s {
     uint16_t item_pos[OSD_ITEM_COUNT];
     uint8_t item_prof[OSD_ITEM_COUNT];
+    uint8_t osdProfileIndex;
+
 
     // Alarms
     uint16_t cap_alarm;
@@ -217,4 +219,6 @@ bool osdWarnGetState(uint8_t warningIndex);
 #ifdef USE_OSD_PROFILES
 void setOsdProfile(uint8_t value);
 void buildOsdProfileString(uint8_t value, char *buffer);
+uint8_t getCurrentOsdProfileIndex(void);
+void changeOsdProfileIndex(uint8_t profileIndex);
 #endif

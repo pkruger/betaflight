@@ -205,7 +205,7 @@ static const uint8_t osdElementDisplayOrder[] = {
     OSD_ANTI_GRAVITY
 };
 
-PG_REGISTER_WITH_RESET_FN(osdConfig_t, osdConfig, PG_OSD_CONFIG, 3);
+PG_REGISTER_WITH_RESET_FN(osdConfig_t, osdConfig, PG_OSD_CONFIG, 4);
 
 /**
  * Gets the correct altitude symbol for the current unit system
@@ -450,6 +450,58 @@ bool osdWarnGetState(uint8_t warningIndex)
 {
     return osdConfig()->enabledWarnings & (1 << warningIndex);
 }
+
+#ifdef USE_OSD_PROFILES
+void setOsdProfile(uint8_t value)
+{
+    // 0 -<< 000
+    // 1 ->> 001
+    // 2 ->> 010
+    // 3 ->> 100
+    if (value <= OSD_PROFILE_COUNT) {
+        if (value == 0) osdProfile = value;
+        else osdProfile = 1 << (value - 1);
+    }
+ }
+
+void buildOsdProfileString(uint8_t value, char *buffer)
+{
+uint8_t count = 0;
+
+    if (NULL == buffer) return;
+    if (value == 0) {
+        strcpy(buffer, "none");
+        return;
+    }
+
+    while (count < OSD_PROFILE_COUNT) {
+        if (value & 0x01) {
+            *buffer++ = (count+1) + 0x30;
+            if ((value >> 1) != 0) {
+                *buffer++ = ',';
+            }
+        }
+        value >>= 1;
+        if (value == 0) break;
+        count++;
+    }
+    *buffer = 0x00;
+}
+
+uint8_t getCurrentOsdProfileIndex(void)
+{
+    return osdConfigMutable()->osdProfileIndex;
+}
+
+void changeOsdProfileIndex(uint8_t profileIndex)
+{
+    if (profileIndex <= OSD_PROFILE_COUNT) {
+        osdConfigMutable()->osdProfileIndex = profileIndex;
+        setOsdProfile(profileIndex);
+    }
+}
+#endif
+
 
 static bool osdDrawSingleElement(uint8_t item)
 {
@@ -1133,6 +1185,8 @@ void osdInit(displayPort_t *osdDisplayPortToUse)
     displayResync(osdDisplayPort);
 
     resumeRefreshAt = micros() + (4 * REFRESH_1S);
+
+    changeOsdProfileIndex(osdConfig()->osdProfileIndex);
 }
 
 bool osdInitialized(void)
@@ -1603,42 +1657,4 @@ void osdUpdate(timeUs_t currentTimeUs)
     }
 #endif
 }
-
-#ifdef USE_OSD_PROFILES
-void setOsdProfile(uint8_t value)
-{
-    // 0 -<< 000
-    // 1 ->> 001
-    // 2 ->> 010
-    // 3 ->> 100
-    if (value <= OSD_PROFILE_COUNT) {
-        if (value == 0) osdProfile = value;
-        else osdProfile = 1 << (value - 1);
-    }
- }
-
-void buildOsdProfileString(uint8_t value, char *buffer)
-{
-uint8_t count = 0;
-
-    if (NULL == buffer) return;
-    if (value == 0) {
-        strcpy(buffer, "none");
-        return;
-    }
-
-    while (count < OSD_PROFILE_COUNT) {
-        if (value & 0x01) {
-            *buffer++ = (count+1) + 0x30;
-            if ((value >> 1) != 0) {
-                *buffer++ = ',';
-            }
-        }
-        value >>= 1;
-        if (value == 0) break;
-        count++;
-    }
-    *buffer = 0x00;
-}
-#endif
 #endif // USE_OSD

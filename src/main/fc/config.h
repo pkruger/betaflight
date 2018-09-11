@@ -36,9 +36,6 @@ PG_DECLARE(pilotConfig_t, pilotConfig);
 typedef struct systemConfig_s {
     uint8_t pidProfileIndex;
     uint8_t activeRateProfile;
-#ifdef USE_OSD_PROFILES
-    uint8_t osdProfileIndex;
-#endif
     uint8_t debug_mode;
     uint8_t task_statistics;
     uint8_t rateProfile6PosSwitch;
@@ -76,8 +73,3 @@ uint16_t getCurrentMinthrottle(void);
 void resetConfigs(void);
 void targetConfiguration(void);
 void targetValidateConfiguration(void);
-
-#ifdef USE_OSD_PROFILES
-uint8_t getCurrentOsdProfileIndex(void);
-void changeOsdProfileIndex(uint8_t profileIndex);
-#endif
