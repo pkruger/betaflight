@@ -1109,8 +1109,57 @@ const clivalue_t valueTable[] = {
 // RCDEVICE
 #ifdef USE_RCDEVICE
     { "rcdevice_init_dev_attempts", VAR_UINT8 | MASTER_VALUE, .config.minmax = { 0, 10 }, PG_RCDEVICE_CONFIG, offsetof(rcdeviceConfig_t, initDeviceAttempts) },
-    { "rcdevice_init_dev_attempt_interval", VAR_UINT32 | MASTER_VALUE, .config.minmax = { 500, 5000 }, PG_RCDEVICE_CONFIG, offsetof(rcdeviceConfig_t, initDeviceAttemptInterval) }
+    { "rcdevice_init_dev_attempt_interval", VAR_UINT32 | MASTER_VALUE, .config.minmax = { 500, 5000 }, PG_RCDEVICE_CONFIG, offsetof(rcdeviceConfig_t, initDeviceAttemptInterval) },
 #endif
+
+#ifdef USE_OSD_PROFILES
+    { "osd_vbat_prf",              VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_MAIN_BATT_VOLTAGE]) },
+    { "osd_rssi_prf",              VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_RSSI_VALUE]) },
+    { "osd_tim_1_prf",              VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_ITEM_TIMER_1]) },
+    { "osd_tim_2_prf",              VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_ITEM_TIMER_2]) },
+    { "osd_remaining_time_estimate_prf",        VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_REMAINING_TIME_ESTIMATE]) },
+    { "osd_flymode_prf",            VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_FLYMODE]) },
+    { "osd_anti_gravity_prf",       VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_ANTI_GRAVITY]) },
+    { "osd_g_force_prf",            VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_G_FORCE]) },
+    { "osd_throttle_prf",           VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_THROTTLE_POS]) },
+    { "osd_vtx_channel_prf",        VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_VTX_CHANNEL]) },
+    { "osd_crosshairs_prf",         VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_CROSSHAIRS]) },
+    { "osd_ah_sbar_prf",            VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_HORIZON_SIDEBARS]) },
+    { "osd_ah_prf",                 VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_ARTIFICIAL_HORIZON]) },
+    { "osd_current_prf",            VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_CURRENT_DRAW]) },
+    { "osd_mah_drawn_prf",          VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_MAH_DRAWN]) },
+    { "osd_craft_name_prf",         VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_CRAFT_NAME]) },
+    { "osd_gps_speed_prf",          VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_GPS_SPEED]) },
+    { "osd_gps_lon_prf",            VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_GPS_LON]) },
+    { "osd_gps_lat_prf",            VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_GPS_LAT]) },
+    { "osd_gps_sats_prf",           VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_GPS_SATS]) },
+    { "osd_home_dir_prf",           VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_HOME_DIR]) },
+    { "osd_home_dist_prf",          VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_HOME_DIST]) },
+    { "osd_compass_bar_prf",        VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_COMPASS_BAR]) },
+    { "osd_altitude_prf",           VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_ALTITUDE]) },
+    { "osd_pid_roll_prf",           VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_ROLL_PIDS]) },
+    { "osd_pid_pitch_prf",          VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_PITCH_PIDS]) },
+    { "osd_pid_yaw_prf",            VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_YAW_PIDS]) },
+    { "osd_debug_prf",              VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_DEBUG]) },
+    { "osd_power_prf",              VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_POWER]) },
+    { "osd_pidrate_profile_prf",    VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_PIDRATE_PROFILE]) },
+    { "osd_warnings_prf",           VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_WARNINGS]) },
+    { "osd_avg_cell_voltage_prf",   VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_AVG_CELL_VOLTAGE]) },
+    { "osd_pit_ang_prf",            VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_PITCH_ANGLE]) },
+    { "osd_rol_ang_prf",            VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_ROLL_ANGLE]) },
+    { "osd_battery_usage_prf",      VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_MAIN_BATT_USAGE]) },
+    { "osd_disarmed_prf",           VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_DISARMED]) },
+    { "osd_nheading_prf",           VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_NUMERICAL_HEADING]) },
+    { "osd_nvario_prf",             VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_NUMERICAL_VARIO]) },
+    { "osd_esc_tmp_prf",            VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_ESC_TMP]) },
+    { "osd_esc_rpm_prf",            VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_ESC_RPM]) },
+    { "osd_rtc_date_time_prf",      VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_RTC_DATETIME]) },
+    { "osd_adjustment_range_prf",   VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_ADJUSTMENT_RANGE]) },
+#ifdef USE_ADC_INTERNAL
+    { "osd_core_temp_prf",          VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0, OSD_PROFILE_MAX }, PG_OSD_CONFIG, offsetof(osdConfig_t, item_prof[OSD_CORE_TEMPERATURE]) },
+#endif
+#endif
+
 };
 
 const uint16_t valueTableEntryCount = ARRAYLEN(valueTable);

@@ -28,14 +28,14 @@ extern const char * const osdTimerSourceNames[OSD_NUM_TIMER_TYPES];
 
 #define OSD_ELEMENT_BUFFER_LENGTH 32
 
-#define OSD_PROFILE_COUNT 4
+#define OSD_PROFILE_COUNT 3
+#define OSD_PROFILE_MAX   ((1 << OSD_PROFILE_COUNT) - 1)
 
 #define VISIBLE_FLAG  0x0800
 #define VISIBLE(x)    (x & VISIBLE_FLAG)
 #define OSD_POS_MAX   0x3FF
 #define OSD_POSCFG_MAX   (VISIBLE_FLAG|0x3FF) // For CLI values
-#define OSD_PROFILE_MASK 0xF000
-#define OSD_ELEMENT_PROFILE_MASK(x) (((uint16_t)(x) & OSD_PROFILE_MASK) >> 12)
+#define OSD_PROFILE_MASK  (0x07)
 
 // Character coordinate
 #define OSD_POSITION_BITS 5 // 5 bits gives a range 0-31
@@ -179,6 +179,7 @@ STATIC_ASSERT(OSD_WARNING_COUNT <= 16, osdwarnings_overflow);
 
 typedef struct osdConfig_s {
     uint16_t item_pos[OSD_ITEM_COUNT];
+    uint8_t item_prof[OSD_ITEM_COUNT];
 
     // Alarms
     uint16_t cap_alarm;

@@ -109,8 +109,8 @@ const char * const osdTimerSourceNames[] = {
     "LAST ARM "
 };
 
-// Blink control
 
+// Blink control
 static bool blinkState = true;
 static bool showVisualBeeper = false;
 
@@ -457,7 +457,7 @@ static bool osdDrawSingleElement(uint8_t item)
         return false;
     }
 
-    if ((osdProfile != 0) && ((OSD_ELEMENT_PROFILE_MASK(osdConfig()->item_pos[item]) & osdProfile) == 0)) return false;
+    if ((osdProfile != 0) && (((osdConfig()->item_prof[item] & OSD_PROFILE_MASK) & osdProfile) == 0)) return false;
 
     uint8_t elemPosX = OSD_X(osdConfig()->item_pos[item]);
     uint8_t elemPosY = OSD_Y(osdConfig()->item_pos[item]);
@@ -1607,11 +1607,10 @@ void osdUpdate(timeUs_t currentTimeUs)
 #ifdef USE_OSD_PROFILES
 void setOsdProfile(uint8_t value)
 {
-    // 0 -<< 0000
-    // 1 ->> 0001
-    // 2 ->> 0010
-    // 3 ->> 0100
-    // 4 ->> 1000
+    // 0 -<< 000
+    // 1 ->> 001
+    // 2 ->> 010
+    // 3 ->> 100
     if (value <= OSD_PROFILE_COUNT) {
         if (value == 0) osdProfile = value;
         else osdProfile = 1 << (value - 1);
@@ -1628,7 +1627,7 @@ uint8_t count = 0;
         return;
     }
 
-    while (count < 4) {
+    while (count < OSD_PROFILE_COUNT) {
         if (value & 0x01) {
             *buffer++ = (count+1) + 0x30;
             if ((value >> 1) != 0) {
