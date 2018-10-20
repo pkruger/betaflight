@@ -150,7 +150,9 @@ timeUs_t resumeRefreshAt = 0;
 
 static uint8_t armState;
 static bool lastArmState;
-
+#ifdef USE_OSD_PROFILES
+static uint8_t osdProfile = 0;
+#endif
 static displayPort_t *osdDisplayPort;
 
 #ifdef USE_ESC_SENSOR
@@ -465,12 +467,42 @@ bool osdWarnGetState(uint8_t warningIndex)
     return osdConfig()->enabledWarnings & (1 << warningIndex);
 }
 
+#ifdef USE_OSD_PROFILES
+void setOsdProfile(uint8_t value)
+{
+    // 0 -<< 000
+    // 1 ->> 001
+    // 2 ->> 010
+    // 3 ->> 100
+    if (value <= OSD_PROFILE_COUNT) {
+        if (value == 0) osdProfile = value;
+        else osdProfile = 1 << (value - 1);
+    }
+ }
+
+uint8_t getCurrentOsdProfileIndex(void)
+{
+    return osdConfigMutable()->osdProfileIndex;
+}
+
+void changeOsdProfileIndex(uint8_t profileIndex)
+{
+    if (profileIndex <= OSD_PROFILE_COUNT) {
+        osdConfigMutable()->osdProfileIndex = profileIndex;
+        setOsdProfile(profileIndex);
+    }
+}
+#endif
+
+
 static bool osdDrawSingleElement(uint8_t item)
 {
     if (!VISIBLE(osdConfig()->item_pos[item]) || BLINK(item)) {
         return false;
     }
-
+#ifdef USE_OSD_PROFILES
+    if ((osdProfile != 0) && ((OSD_ELEMENT_PROFILE(osdConfig()->item_pos[item]) & osdProfile) == 0)) return false;
+#endif
     uint8_t elemPosX = OSD_X(osdConfig()->item_pos[item]);
     uint8_t elemPosY = OSD_Y(osdConfig()->item_pos[item]);
     char buff[OSD_ELEMENT_BUFFER_LENGTH] = "";
@@ -1218,6 +1250,9 @@ void osdInit(displayPort_t *osdDisplayPortToUse)
     displayResync(osdDisplayPort);
 
     resumeRefreshAt = micros() + (4 * REFRESH_1S);
+#ifdef USE_OSD_PROFILES
+    changeOsdProfileIndex(osdConfig()->osdProfileIndex);
+#endif
 }
 
 bool osdInitialized(void)

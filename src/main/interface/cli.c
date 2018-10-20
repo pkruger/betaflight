@@ -3528,6 +3528,22 @@ STATIC_UNIT_TESTED void cliSet(char *cmdline)
     }
 }
 
+#ifdef USE_OSD_PROFILES
+STATIC_UNIT_TESTED void cliOsdProfile(char *cmdline)
+{
+    if (isEmpty(cmdline)) {
+        cliPrintLinef("osdprofile %d", getCurrentOsdProfileIndex());
+        return;
+    } else {
+        const int i = atoi(cmdline);
+        if (i >= 0 && i <= OSD_PROFILE_COUNT) {
+            changeOsdProfileIndex(i);
+            cliOsdProfile("");
+        }
+    }
+}
+#endif
+
 static void cliStatus(char *cmdline)
 {
     UNUSED(cmdline);
@@ -4529,6 +4545,9 @@ const clicmd_t cmdTable[] = {
     CLI_COMMAND_DEF("servo", "configure servos", NULL, cliServo),
 #endif
     CLI_COMMAND_DEF("set", "change setting", "[<name>=<value>]", cliSet),
+#ifdef USE_OSD_PROFILES
+    CLI_COMMAND_DEF("osdprofile", "change osd profile", "[<index>]", cliOsdProfile),
+#endif
 #if defined(USE_BOARD_INFO) && defined(USE_SIGNATURE)
     CLI_COMMAND_DEF("signature", "get / set the board type signature", "[signature]", cliSignature),
 #endif

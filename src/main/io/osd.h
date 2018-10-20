@@ -28,10 +28,15 @@ extern const char * const osdTimerSourceNames[OSD_NUM_TIMER_TYPES];
 
 #define OSD_ELEMENT_BUFFER_LENGTH 32
 
+#define OSD_PROFILE_COUNT 3
+
 #define VISIBLE_FLAG  0x0800
 #define VISIBLE(x)    (x & VISIBLE_FLAG)
 #define OSD_POS_MAX   0x3FF
-#define OSD_POSCFG_MAX   (VISIBLE_FLAG|0x3FF) // For CLI values
+#define OSD_POSCFG_MAX   (OSD_PROFILE_FLAGS|VISIBLE_FLAG|0x3FF) // For CLI values
+#define OSD_PROFILE_FLAGS 0x7000
+#define OSD_ELEMENT_PROFILE(x) (((x) & OSD_PROFILE_FLAGS) >> 12)
+
 
 // Character coordinate
 #define OSD_POSITION_BITS 5 // 5 bits gives a range 0-31
@@ -181,7 +186,9 @@ STATIC_ASSERT(OSD_WARNING_COUNT <= 16, osdwarnings_overflow);
 
 typedef struct osdConfig_s {
     uint16_t item_pos[OSD_ITEM_COUNT];
-
+#ifdef USE_OSD_PROFILES
+    uint8_t osdProfileIndex;
+#endif
     // Alarms
     uint16_t cap_alarm;
     uint16_t alt_alarm;
@@ -215,4 +222,8 @@ bool osdStatGetState(uint8_t statIndex);
 void osdWarnSetState(uint8_t warningIndex, bool enabled);
 bool osdWarnGetState(uint8_t warningIndex);
 
-
+#ifdef USE_OSD_PROFILES
+void setOsdProfile(uint8_t value);
+uint8_t getCurrentOsdProfileIndex(void);
+void changeOsdProfileIndex(uint8_t profileIndex);
+#endif
