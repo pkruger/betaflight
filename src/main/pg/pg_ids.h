@@ -79,6 +79,8 @@
 #define PG_IBUS_TELEMETRY_CONFIG 53 // CF 1.x
 //#define PG_VTX_CONFIG 54 // CF 1.x
 #define PG_GPS_RESCUE 55 // struct OK
+#define PG_RATE_PROFILE_NAMES_CONFIG 56 // does not exist in betaflight
+#define PG_PID_PROFILE_NAMES_CONFIG  57 // does not exist in betaflight
 
 // Driver configuration
 #define PG_DRIVER_PWM_RX_CONFIG 100 // does not exist in betaflight

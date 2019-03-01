@@ -113,6 +113,8 @@ const OSD_Entry menuOsdActiveElemsEntries[] =
     {"PITCH PID",          OME_VISIBLE, NULL, &osdConfig_item_pos[OSD_PITCH_PIDS], DYNAMIC},
     {"YAW PID",            OME_VISIBLE, NULL, &osdConfig_item_pos[OSD_YAW_PIDS], DYNAMIC},
     {"PROFILES",           OME_VISIBLE, NULL, &osdConfig_item_pos[OSD_PIDRATE_PROFILE], DYNAMIC},
+    {"PID PROFILE NAME",   OME_VISIBLE, NULL, &osdConfig_item_pos[OSD_PID_PROFILE_NAME], DYNAMIC},
+    {"RATE PROFILE NAME",  OME_VISIBLE, NULL, &osdConfig_item_pos[OSD_RATE_PROFILE_NAME], DYNAMIC},
     {"DEBUG",              OME_VISIBLE, NULL, &osdConfig_item_pos[OSD_DEBUG], DYNAMIC},
     {"WARNINGS",           OME_VISIBLE, NULL, &osdConfig_item_pos[OSD_WARNINGS], DYNAMIC},
     {"DISARMED",           OME_VISIBLE, NULL, &osdConfig_item_pos[OSD_DISARMED], DYNAMIC},
