@@ -361,11 +361,17 @@ void osdInit(displayPort_t *osdDisplayPortToUse)
     osdDrawLogo(3, 1);
 
     osdDrawPilotLogo(3, 7);
-    osdDrawPilotLogo(21, 7);
+    osdDrawPilotLogo(23, 7);
 
     char string_buffer[30];
     tfp_sprintf(string_buffer, "V%s", FC_VERSION_STRING);
+#ifdef PEKS
+    displayWrite(osdDisplayPort, 12, 5, string_buffer);
+    tfp_sprintf(string_buffer, "%s", "@ PIETER  KRUGER @");
+    displayWrite(osdDisplayPort, 6, 6, string_buffer);
+#else
     displayWrite(osdDisplayPort, 20, 6, string_buffer);
+#endif
 #ifdef USE_CMS
     displayWrite(osdDisplayPort, 7, 8,  CMS_STARTUP_HELP_TEXT1);
     displayWrite(osdDisplayPort, 11, 9, CMS_STARTUP_HELP_TEXT2);
@@ -865,7 +871,7 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
     if (osdShowPilotLogo != osdShowPilotLogoLast) {
         if (osdShowPilotLogo) {
             osdDrawPilotLogo(3, 8);
-            osdDrawPilotLogo(21, 8);
+            osdDrawPilotLogo(23, 8);
             resumeRefreshAt = currentTimeUs + ((2 * REFRESH_1S) / 2);
         }
     }
