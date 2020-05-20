@@ -387,9 +387,16 @@ static void osdCompleteInitialization(void)
 
     osdDrawLogo(3, 1);
 
-    char string_buffer[30];
+    char string_buffer[50];
     tfp_sprintf(string_buffer, "V%s", FC_VERSION_STRING);
+#ifdef PEKS
+    displayWrite(osdDisplayPort, 12, 5, DISPLAYPORT_ATTR_NONE, string_buffer);
+    tfp_sprintf(string_buffer, "%s", "@ PIETER  KRUGER @");
+    displayWrite(osdDisplayPort, 6, 6, DISPLAYPORT_ATTR_NONE, string_buffer);
+#else
     displayWrite(osdDisplayPort, 20, 6, DISPLAYPORT_ATTR_NONE, string_buffer);
+#endif
+
 #ifdef USE_CMS
     displayWrite(osdDisplayPort, 7, 8,  DISPLAYPORT_ATTR_NONE, CMS_STARTUP_HELP_TEXT1);
     displayWrite(osdDisplayPort, 11, 9, DISPLAYPORT_ATTR_NONE, CMS_STARTUP_HELP_TEXT2);
