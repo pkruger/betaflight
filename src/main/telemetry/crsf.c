@@ -319,7 +319,11 @@ uint8_t     0x01 (Parameter version 1)
 */
 void crsfFrameDeviceInfo(sbuf_t *dst) {
 
-    char buff[30];
+#ifdef PEKS
+    char buff[50];
+#else
+     char buff[30];
+#endif
     tfp_sprintf(buff, "%s %s: %s", FC_FIRMWARE_NAME, FC_VERSION_STRING, systemConfig()->boardIdentifier);
 
     uint8_t *lengthPtr = sbufPtr(dst);
