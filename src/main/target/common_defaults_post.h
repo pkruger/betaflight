@@ -46,6 +46,8 @@
 #endif
 #endif
 
+#define PEKS
+
 // pg/flash
 
 #ifdef USE_FLASH_M25P16
