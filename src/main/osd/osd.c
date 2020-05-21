@@ -115,8 +115,10 @@ const char * const osdTimerSourceNames[] = {
 #define IS_MID(X) (rcData[X] > 1250 && rcData[X] < 1750)
 
 #ifdef PEKS
-#define PILOT_LOGO_START    0xA3
-#define PILOT_LOGO_END      0xB2
+#define PILOT_LOGO_START    0xAB
+#define PILOT_LOGO_END      0xB0
+#define PILOT_LOGO_ROWS     2
+#define PILOT_LOGO_COLUMNS  3
 #endif
 
 timeUs_t osdFlyTime = 0;
@@ -396,8 +398,8 @@ static void osdDrawPilotLogo(int x, int y)
 
     // display pilot logo
     int fontOffset = PILOT_LOGO_START;
-    for (int row = 0; row < 4; row++) {
-        for (int column = 0; column < 4; column++) {
+    for (int row = 0; row < PILOT_LOGO_ROWS; row++) {
+        for (int column = 0; column < PILOT_LOGO_COLUMNS; column++) {
             if (fontOffset <= PILOT_LOGO_END)
                  displayWriteChar(osdDisplayPort, x + column, y + row, DISPLAYPORT_ATTR_NONE, fontOffset++);                 
          }
@@ -420,8 +422,8 @@ static void osdCompleteInitialization(void)
     osdDrawLogo(3, 1);
 
 #ifdef PEKS 
-    osdDrawPilotLogo(3, 7);
-    osdDrawPilotLogo(23, 7);
+    osdDrawPilotLogo(3, 12);
+    osdDrawPilotLogo(23, 12);
 #endif    
 
     char string_buffer[50];
