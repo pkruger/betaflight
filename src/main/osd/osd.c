@@ -95,6 +95,10 @@
 #include "hardware_revision.h"
 #endif
 
+#ifdef PEKS
+#include "config/config.h"
+#endif
+
 typedef enum {
     OSD_LOGO_ARMING_OFF,
     OSD_LOGO_ARMING_ON,
@@ -131,6 +135,10 @@ static bool showVisualBeeper = false;
 static statistic_t stats;
 timeUs_t resumeRefreshAt = 0;
 #define REFRESH_1S    1000 * 1000
+#ifdef PEKS
+#define REFRESH_100MS   ((1000 * 1000) / 10)
+#endif
+
 
 static uint8_t armState;
 #ifdef USE_OSD_PROFILES
@@ -423,7 +431,7 @@ static void osdCompleteInitialization(void)
 
 #ifdef PEKS 
     osdDrawPilotLogo(3, 12);
-    osdDrawPilotLogo(23, 12);
+    osdDrawPilotLogo(24, 12);
 #endif    
 
     char string_buffer[50];
@@ -919,7 +927,9 @@ static void osdRefreshStats(void)
 static timeDelta_t osdShowArmed(void)
 {
     timeDelta_t ret;
-
+#ifdef PEKS
+    char strbuf[MAX_NAME_LENGTH + 1];
+#endif
     displayClearScreen(osdDisplayPort);
 
     if ((osdConfig()->logo_on_arming == OSD_LOGO_ARMING_ON) || ((osdConfig()->logo_on_arming == OSD_LOGO_ARMING_FIRST) && !ARMING_FLAG(WAS_EVER_ARMED))) {
@@ -929,7 +939,18 @@ static timeDelta_t osdShowArmed(void)
         ret = (REFRESH_1S / 2);
     }
     displayWrite(osdDisplayPort, 12, 7, DISPLAYPORT_ATTR_NONE, "ARMED");
-
+#ifdef PEKS
+    unsigned i;
+    for (i = 0; i < MAX_NAME_LENGTH; i++) {
+        if (pilotConfig()->name[i]) {
+            strbuf[i] = toupper((unsigned char)pilotConfig()->name[i]);
+        } else {
+            break;
+        }
+    }
+    strbuf[i] = '\0';
+    displayWrite(osdDisplayPort, ((29-strlen(strbuf))/2), 8, DISPLAYPORT_ATTR_NONE, strbuf);
+#endif
     return ret;
 }
 
@@ -942,6 +963,11 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
 #ifdef PEKS    
     static bool osdShowPilotLogo = false;
     static bool osdShowPilotLogoLast = false;
+    char strbuf[MAX_NAME_LENGTH + 1];
+    static uint8_t armed_ypos = 8;
+    static uint8_t carft_ypos = 7;
+    static timeUs_t osdArmedDropTimeUs;
+    static bool osdArmedDropInit = false;
 #endif
 
     if (!osdIsReady) {
@@ -959,6 +985,8 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
             osdStatsVisible = false;
             osdResetStats();
             resumeRefreshAt = osdShowArmed() + currentTimeUs;
+            carft_ypos = 7;
+            armed_ypos = 8;
         } else if (isSomeStatEnabled()
                    && !suppressStatsDisplay
                    && (!(getArmingDisableFlags() & (ARMING_DISABLED_RUNAWAY_TAKEOFF | ARMING_DISABLED_CRASH_DETECTED))
@@ -972,14 +1000,14 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
         armState = ARMING_FLAG(ARMED);
     }
 
-
     if (ARMING_FLAG(ARMED)) {
         osdUpdateStats();
         timeUs_t deltaT = currentTimeUs - lastTimeUs;
         osdFlyTime += deltaT;
         stats.armed_time += deltaT;
-#ifdef PEKS        
-    } else {
+    } 
+#ifdef PEKS
+    else {
         if (osdStatsEnabled) {  // handle showing/hiding stats based on OSD disable switch position
             if (displayIsGrabbed(osdDisplayPort)) {
                 osdStatsEnabled = false;
@@ -1002,9 +1030,10 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
             }
         }
         osdShowPilotLogo = false;
+        osdArmedDropInit = false;
     }
 #else
-    } else if (osdStatsEnabled) {  // handle showing/hiding stats based on OSD disable switch position
+    else if (osdStatsEnabled) {  // handle showing/hiding stats based on OSD disable switch position
         if (displayIsGrabbed(osdDisplayPort)) {
             osdStatsEnabled = false;
             resumeRefreshAt = 0;
@@ -1034,8 +1063,45 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
     if (osdShowPilotLogo != osdShowPilotLogoLast) {
         if (osdShowPilotLogo) {
             osdDrawPilotLogo(3, 8);
-            osdDrawPilotLogo(23, 8);
+            osdDrawPilotLogo(24, 8);
+            osdArmedDropInit = true;
+            osdArmedDropTimeUs = currentTimeUs;
             resumeRefreshAt = currentTimeUs + ((4 * REFRESH_1S) / 2);
+        }
+    }
+    if ((currentTimeUs >= osdArmedDropTimeUs) && (osdArmedDropInit)) {
+        osdArmedDropTimeUs = currentTimeUs + REFRESH_100MS;
+        if (carft_ypos < 14) {
+            if (carft_ypos != 7) {
+                memset(strbuf, 0x20, MAX_NAME_LENGTH);
+                strbuf[MAX_NAME_LENGTH] = '\0';
+                displayWrite(osdDisplayPort, ((29-strlen(strbuf))/2), carft_ypos, DISPLAYPORT_ATTR_NONE, strbuf);
+            }
+            carft_ypos++;
+            unsigned i;
+            for (i = 0; i < MAX_NAME_LENGTH; i++) {
+                if (pilotConfig()->name[i]) {
+                    strbuf[i] = toupper((unsigned char)pilotConfig()->name[i]);
+                } else {
+                    break;
+                }
+            }
+            strbuf[i] = '\0';
+            displayWrite(osdDisplayPort, ((29-strlen(strbuf))/2), carft_ypos, DISPLAYPORT_ATTR_NONE, strbuf);
+        } else {
+            memset(strbuf, 0x20, MAX_NAME_LENGTH);
+            strbuf[MAX_NAME_LENGTH] = '\0';
+            displayWrite(osdDisplayPort, ((29-strlen(strbuf))/2), carft_ypos, DISPLAYPORT_ATTR_NONE, strbuf);
+        }
+
+        if (armed_ypos > 0) {
+            if (armed_ypos != 8) {
+                displayWrite(osdDisplayPort, 12, armed_ypos, DISPLAYPORT_ATTR_NONE, "     ");
+            }
+            armed_ypos--;
+            displayWrite(osdDisplayPort, 12, armed_ypos, DISPLAYPORT_ATTR_NONE, "ARMED");
+        } else {
+            displayWrite(osdDisplayPort, 12, armed_ypos, DISPLAYPORT_ATTR_NONE, "     ");
         }
     }
     osdShowPilotLogoLast = osdShowPilotLogo;
