@@ -430,8 +430,8 @@ static void osdCompleteInitialization(void)
     osdDrawLogo(3, 1);
 
 #ifdef PEKS 
-    osdDrawPilotLogo(3, 12);
-    osdDrawPilotLogo(24, 12);
+    osdDrawPilotLogo(PILOT_LOGO_X1, PILOT_LOGO_Y1);
+    osdDrawPilotLogo(PILOT_LOGO_X2, PILOT_LOGO_Y2);
 #endif    
 
     char string_buffer[50];
@@ -950,6 +950,16 @@ static timeDelta_t osdShowArmed(void)
     }
     strbuf[i] = '\0';
     displayWrite(osdDisplayPort, ((29-strlen(strbuf))/2), 8, DISPLAYPORT_ATTR_NONE, strbuf);
+
+    for (i = 0; i < MAX_NAME_LENGTH; i++) {
+        if (pilotConfig()->displayName[i]) {
+            strbuf[i] = toupper((unsigned char)pilotConfig()->displayName[i]);
+        } else {
+            break;
+        }
+    }
+    strbuf[i] = '\0';
+    displayWrite(osdDisplayPort, ((29-strlen(strbuf))/2), 9, DISPLAYPORT_ATTR_NONE, strbuf);
 #endif
     return ret;
 }
@@ -964,8 +974,8 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
     static bool osdShowPilotLogo = false;
     static bool osdShowPilotLogoLast = false;
     char strbuf[MAX_NAME_LENGTH + 1];
-    static uint8_t armed_ypos = 8;
-    static uint8_t carft_ypos = 7;
+    static uint8_t armed_ypos = 7;
+    static uint8_t carft_ypos = 9;
     static timeUs_t osdArmedDropTimeUs;
     static bool osdArmedDropInit = false;
 #endif
@@ -981,12 +991,13 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
     // detect arm/disarm
     if (armState != ARMING_FLAG(ARMED)) {
         if (ARMING_FLAG(ARMED)) {
+            displayClearScreen(osdDisplayPort);
             osdStatsEnabled = false;
             osdStatsVisible = false;
             osdResetStats();
             resumeRefreshAt = osdShowArmed() + currentTimeUs;
-            carft_ypos = 7;
-            armed_ypos = 8;
+            carft_ypos = 9;
+            armed_ypos = 7;
         } else if (isSomeStatEnabled()
                    && !suppressStatsDisplay
                    && (!(getArmingDisableFlags() & (ARMING_DISABLED_RUNAWAY_TAKEOFF | ARMING_DISABLED_CRASH_DETECTED))
@@ -1062,8 +1073,8 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
 #ifdef PEKS
     if (osdShowPilotLogo != osdShowPilotLogoLast) {
         if (osdShowPilotLogo) {
-            osdDrawPilotLogo(3, 8);
-            osdDrawPilotLogo(24, 8);
+            osdDrawPilotLogo(PILOT_LOGO_X1, PILOT_LOGO_Y1);
+            osdDrawPilotLogo(PILOT_LOGO_X2, PILOT_LOGO_Y2);
             osdArmedDropInit = true;
             osdArmedDropTimeUs = currentTimeUs;
             resumeRefreshAt = currentTimeUs + ((4 * REFRESH_1S) / 2);
@@ -1072,7 +1083,7 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
     if ((currentTimeUs >= osdArmedDropTimeUs) && (osdArmedDropInit)) {
         osdArmedDropTimeUs = currentTimeUs + REFRESH_100MS;
         if (carft_ypos < 14) {
-            if (carft_ypos != 7) {
+            if (carft_ypos != 9) {
                 memset(strbuf, 0x20, MAX_NAME_LENGTH);
                 strbuf[MAX_NAME_LENGTH] = '\0';
                 displayWrite(osdDisplayPort, ((29-strlen(strbuf))/2), carft_ypos, DISPLAYPORT_ATTR_NONE, strbuf);
@@ -1080,8 +1091,8 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
             carft_ypos++;
             unsigned i;
             for (i = 0; i < MAX_NAME_LENGTH; i++) {
-                if (pilotConfig()->name[i]) {
-                    strbuf[i] = toupper((unsigned char)pilotConfig()->name[i]);
+                if (pilotConfig()->displayName[i]) {
+                    strbuf[i] = toupper((unsigned char)pilotConfig()->displayName[i]);
                 } else {
                     break;
                 }
@@ -1095,7 +1106,7 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
         }
 
         if (armed_ypos > 0) {
-            if (armed_ypos != 8) {
+            if (armed_ypos != 7) {
                 displayWrite(osdDisplayPort, 12, armed_ypos, DISPLAYPORT_ATTR_NONE, "     ");
             }
             armed_ypos--;

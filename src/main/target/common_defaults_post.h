@@ -48,6 +48,22 @@
 
 #define PEKS
 
+#ifndef PILOT_LOGO_X1
+#define PILOT_LOGO_X1                   3
+#endif
+
+#ifndef PILOT_LOGO_Y1
+#define PILOT_LOGO_Y1                   12
+#endif
+
+#ifndef PILOT_LOGO_X2
+#define PILOT_LOGO_X2                   24
+#endif
+
+#ifndef PILOT_LOGO_Y2
+#define PILOT_LOGO_Y2                   12
+#endif
+
 // pg/flash
 
 #ifdef USE_FLASH_M25P16
