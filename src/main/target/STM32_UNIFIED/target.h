@@ -80,6 +80,11 @@
 #define TARGET_IO_PORTD 0xffff
 #define TARGET_IO_PORTE 0xffff
 
+#define PILOT_LOGO_X1                   3
+#define PILOT_LOGO_Y1                   8
+#define PILOT_LOGO_X2                   24
+#define PILOT_LOGO_Y2                   8
+
 #elif defined(STM32F7X2)
 #define TARGET_BOARD_IDENTIFIER "S7X2"
 

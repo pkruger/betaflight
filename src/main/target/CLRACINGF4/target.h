@@ -141,3 +141,8 @@
 
 #define USABLE_TIMER_CHANNEL_COUNT 7
 #define USED_TIMERS  (  TIM_N(1) | TIM_N(2) | TIM_N(3) | TIM_N(4) | TIM_N(8) | TIM_N(11))
+
+#define PILOT_LOGO_X1                   3
+#define PILOT_LOGO_Y1                   12
+#define PILOT_LOGO_X2                   24
+#define PILOT_LOGO_Y2                   12

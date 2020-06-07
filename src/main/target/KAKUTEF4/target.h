@@ -198,3 +198,10 @@
 #define USABLE_TIMER_CHANNEL_COUNT 8
 #define USED_TIMERS  ( TIM_N(2) | TIM_N(3) | TIM_N(5)  |  TIM_N(8))
 #endif
+
+#if defined(KAKUTEF4V2) || !defined(FLYWOOF405)
+#define PILOT_LOGO_X1                   3
+#define PILOT_LOGO_Y1                   12
+#define PILOT_LOGO_X2                   24
+#define PILOT_LOGO_Y2                   12
+#endif
