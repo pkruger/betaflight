@@ -22,12 +22,14 @@
 #if defined(KAKUTEF4V2)
 #define TARGET_BOARD_IDENTIFIER "KTV2"
 #define USBD_PRODUCT_STRING "KakuteF4-V2"
+#define TARGET_KAKUTEV2_PEKS
 #elif defined(FLYWOOF405)
 #define TARGET_BOARD_IDENTIFIER "FWF4"
 #define USBD_PRODUCT_STRING "FLYWOOF405"
 #else
 #define TARGET_BOARD_IDENTIFIER "KTV1"
 #define USBD_PRODUCT_STRING "KakuteF4-V1"
+#define TARGET_KAKUTEV1_PEKS
 #endif
 
 #define USE_TARGET_CONFIG
@@ -200,7 +202,7 @@
 #endif
 
 #if defined(KAKUTEF4V2) || !defined(FLYWOOF405)
-#define PILOT_LOGO_X1                   3
+#define PILOT_LOGO_X1                   1
 #define PILOT_LOGO_Y1                   12
 #define PILOT_LOGO_X2                   24
 #define PILOT_LOGO_Y2                   12
