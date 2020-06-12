@@ -121,8 +121,15 @@ const char * const osdTimerSourceNames[] = {
 #ifdef PEKS
 #define PILOT_LOGO_START    0xAB
 #define PILOT_LOGO_END      0xB0
+
+#if defined(TARGET_KAKUTEV2_PEKS) || defined(TARGET_KAKUTEV1_PEKS)
+// GEP RC logo is on 1 line
+#define PILOT_LOGO_ROWS     1
+#define PILOT_LOGO_COLUMNS  5
+#else
 #define PILOT_LOGO_ROWS     2
 #define PILOT_LOGO_COLUMNS  3
+#endif
 #endif
 
 timeUs_t osdFlyTime = 0;
@@ -975,7 +982,7 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
     static bool osdShowPilotLogoLast = false;
     char strbuf[MAX_NAME_LENGTH + 1];
     static uint8_t armed_ypos = 7;
-    static uint8_t carft_ypos = 9;
+    static uint8_t pilot_name_ypos = 9;
     static timeUs_t osdArmedDropTimeUs;
     static bool osdArmedDropInit = false;
 #endif
@@ -996,7 +1003,7 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
             osdStatsVisible = false;
             osdResetStats();
             resumeRefreshAt = osdShowArmed() + currentTimeUs;
-            carft_ypos = 9;
+            pilot_name_ypos = 9;
             armed_ypos = 7;
         } else if (isSomeStatEnabled()
                    && !suppressStatsDisplay
@@ -1082,13 +1089,13 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
     }
     if ((currentTimeUs >= osdArmedDropTimeUs) && (osdArmedDropInit)) {
         osdArmedDropTimeUs = currentTimeUs + REFRESH_100MS;
-        if (carft_ypos < 14) {
-            if (carft_ypos != 9) {
+        if (pilot_name_ypos < 14) {
+            if (pilot_name_ypos != 9) {
                 memset(strbuf, 0x20, MAX_NAME_LENGTH);
                 strbuf[MAX_NAME_LENGTH] = '\0';
-                displayWrite(osdDisplayPort, ((29-strlen(strbuf))/2), carft_ypos, DISPLAYPORT_ATTR_NONE, strbuf);
+                displayWrite(osdDisplayPort, ((29-strlen(strbuf))/2), pilot_name_ypos, DISPLAYPORT_ATTR_NONE, strbuf);
             }
-            carft_ypos++;
+            pilot_name_ypos++;
             unsigned i;
             for (i = 0; i < MAX_NAME_LENGTH; i++) {
                 if (pilotConfig()->displayName[i]) {
@@ -1098,11 +1105,11 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
                 }
             }
             strbuf[i] = '\0';
-            displayWrite(osdDisplayPort, ((29-strlen(strbuf))/2), carft_ypos, DISPLAYPORT_ATTR_NONE, strbuf);
+            displayWrite(osdDisplayPort, ((29-strlen(strbuf))/2), pilot_name_ypos, DISPLAYPORT_ATTR_NONE, strbuf);
         } else {
             memset(strbuf, 0x20, MAX_NAME_LENGTH);
             strbuf[MAX_NAME_LENGTH] = '\0';
-            displayWrite(osdDisplayPort, ((29-strlen(strbuf))/2), carft_ypos, DISPLAYPORT_ATTR_NONE, strbuf);
+            displayWrite(osdDisplayPort, ((29-strlen(strbuf))/2), pilot_name_ypos, DISPLAYPORT_ATTR_NONE, strbuf);
         }
 
         if (armed_ypos > 0) {
